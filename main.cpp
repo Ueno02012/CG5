@@ -26,3 +26,4 @@ KamataEngine::Finalize();
 
 	return 0;
 }
+
