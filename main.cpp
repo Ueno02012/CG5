@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include "KamataEngine.h"
 #include <cassert>
+#include <d3dcompiler.h>
 using namespace KamataEngine;
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -22,7 +23,7 @@ DebugText::GetInstance()->ConsolePrintf(
 ID3D12GraphicsCommandList* commandList = dxCommon->GetCommandList(); 
 
 
-//-----------------RootSignatureの作成------------------//
+//-----------------RootSignatureの作成-----------------//
 //構造体にデータを用意する
 D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
 descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -42,7 +43,7 @@ hr = dxCommon->GetDevice()->CreateRootSignature(
 	IID_PPV_ARGS(&rootSignature));
 assert(SUCCEEDED(hr));
 
-//-------------------InPutLayoutの設定------------------//
+//-------------------InPutLayoutの設定-------------------//
 D3D12_INPUT_ELEMENT_DESC inputElementDescs[1] = {};
 inputElementDescs[0].SemanticName = "POSITION";
 inputElementDescs[0].SemanticIndex = 0;
@@ -58,10 +59,46 @@ D3D12_BLEND_DESC blendDesc{};
 blendDesc.RenderTarget[0].RenderTargetWriteMask =
 D3D12_COLOR_WRITE_ENABLE_ALL;
 
-//------------------RasterizerStateの設定-----------------//
+//------------------RasterizerStateの設定------------------//
 D3D12_RASTERIZER_DESC rasterizerDesc{};
 // 裏面(反時計回り)をカリングする
 rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+// 塗りつぶしモードをソリッドにする(ワイヤーフレームならD3D12_FIll_MODE_WIREFRAME)
+rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+
+//------------------VertexShaderをCompileする------------------//
+// コンパイル済みのShader、エラー時情報の格納場所の用意
+ID3DBlob* vsBlob = nullptr;    //頂点シェーダオブジェクト
+ID3DBlob* psBlob = nullptr;    // ピクセルシェーダオブジェクト
+ID3DBlob* errorBlob = nullptr; //エラーオブジェクト
+
+//　頂点シェーダの読み込みとコンパイル
+std::wstring vsFile = L"Resources/shaders/TestVS.hlsl";
+hr = D3DCompileFromFile(vsFile.c_str(),
+	nullptr, 
+	D3D_COMPILE_STANDARD_FILE_INCLUDE,
+	"main", "vs_5_0",
+	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+	0, &vsBlob, &errorBlob);
+if (FAILED(hr)) {
+	DebugText::GetInstance()->ConsolePrintf(
+		std::system_category().message(hr).c_str());
+	if (errorBlob) {
+		DebugText::GetInstance()->ConsolePrintf(
+			reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+	}
+	assert(false);
+}
+//------------------PixelShaderをCompileする------------------//
+// ピクセルシェーダの読み込みとコンパイル
+std::wstring psFile = L"Resources/shaders/TestPS.hlsl";
+hr = D3DCompileFromFile(
+	psFile.c_str(),
+	nullptr,
+	D3D_COMPILE_STANDARD_FILE_INCLUDE, 
+	"main", "ps_5_0",
+	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+	0,&psBlob,&errorBlob);
 
 
 // メインループ
