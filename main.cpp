@@ -99,7 +99,75 @@ hr = D3DCompileFromFile(
 	"main", "ps_5_0",
 	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
 	0,&psBlob,&errorBlob);
+if (FAILED(hr)) {
+	DebugText::GetInstance()->ConsolePrintf(
+		std::system_category().message(hr).c_str());
+	if (errorBlob) {
+		DebugText::GetInstance()->ConsolePrintf(
+			reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+	}
+	assert(false);
+}
 
+//------------------PSOの生成------------------//
+D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
+graphicsPipelineStateDesc.pRootSignature = rootSignature;   // RootSignature
+graphicsPipelineStateDesc.InputLayout = inputLayoutDesc;	// InputLayout
+graphicsPipelineStateDesc.VS = {vsBlob->GetBufferPointer(), vsBlob->GetBufferSize()};// VertexShader
+graphicsPipelineStateDesc.PS = {psBlob->GetBufferPointer(), psBlob->GetBufferSize()};// PixselShader
+graphicsPipelineStateDesc.BlendState = blendDesc;			// BlendState
+graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;	// RasterizerState
+// 書き込むRTVの情報
+graphicsPipelineStateDesc.NumRenderTargets = 1;  // 1つのRTVに書き込む
+graphicsPipelineStateDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+// 利用するトポロジ(形状)のタイプ。三角形
+graphicsPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+//どのように画面に色を打ち込むかの設定()
+graphicsPipelineStateDesc.SampleDesc.Count = 1;
+graphicsPipelineStateDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+// PSOを生成する
+ID3D12PipelineState* graphicsPipeLineState = nullptr;
+hr = dxCommon->GetDevice()->CreateGraphicsPipelineState(
+	&graphicsPipelineStateDesc, IID_PPV_ARGS(&graphicsPipeLineState));
+assert(SUCCEEDED(hr));
+
+//------------------VertexResourceを生成する------------------//
+// 頂点リソース用のヒープの設定
+D3D12_HEAP_PROPERTIES uploaddheapProperties{};
+uploaddheapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+// 頂点リソースの設定
+D3D12_RESOURCE_DESC vertexResourceDesc{};
+vertexResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+vertexResourceDesc.Width = sizeof(Vector4) * 3; // リソースのサイズ。
+// バッファの場合はこれらは1にする
+vertexResourceDesc.Height = 1;
+vertexResourceDesc.DepthOrArraySize = 1;
+vertexResourceDesc.MipLevels = 1;
+vertexResourceDesc.SampleDesc.Count = 1;
+// バッファの場合はこれにする
+vertexResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+// 実際に頂点リソースを生成する
+ID3D12Resource* vertexResource = nullptr;
+hr = dxCommon->GetDevice()->CreateCommittedResource(&uploaddheapProperties, D3D12_HEAP_FLAG_NONE, &vertexResourceDesc, 
+	D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&vertexResource));
+
+//------------------VertexBufferViewを作成する------------------//
+D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+// リソースの先頭アドレスから使う
+vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
+// 使用するリソースのサイズは頂点3つ分のサイズ
+vertexBufferView.SizeInBytes = sizeof(Vector4) * 3;
+// 1つの頂点のサイズ
+vertexBufferView.StrideInBytes = sizeof(Vector4);
+
+//------------------頂点リソースにデータを書き込む------------------//
+Vector4* vertexData = nullptr;
+vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
+vertexData[0] = {-0.5f, -0.5f, 0.0f, 1.0f};//　左下
+vertexData[1] = {0.0f, 0.5f, 0.0f, 1.0f};// 上
+vertexData[2] = {0.5f, -0.5f, 0.0f, 1.0f};// 右下
+// 頂点リソースのマップを解除
+vertexResource->Unmap(0, nullptr);
 
 // メインループ
 while (true) {
@@ -110,8 +178,30 @@ while (true) {
 	//描画開始
 	dxCommon->PreDraw();
 
+	// コマンドを読む
+	commandList->SetGraphicsRootSignature(rootSignature);// RootSignatureの設定
+	commandList->SetPipelineState(graphicsPipeLineState);// PSOの設定
+	commandList->IASetVertexBuffers(0, 1, &vertexBufferView);// VBVの設定
+	// トポロジの設定
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	// 頂点数、インデックス数、インデックスの開始位置、インデックスのオフセット
+	commandList->DrawInstanced(3, 1, 0, 0);
+
+
 	dxCommon->PostDraw();
 }
+// 解放処理
+vertexResource->Release();
+graphicsPipeLineState->Release();
+signatureBlob->Release();
+if (errorBlob) {
+	errorBlob->Release();
+}
+rootSignature->Release();
+vsBlob->Release();
+psBlob->Release();
+
+
 //エンジンの終了処理
 KamataEngine::Finalize();
 
