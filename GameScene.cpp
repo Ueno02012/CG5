@@ -4,7 +4,6 @@ GameScene::GameScene() {}
 
 GameScene::~GameScene() { 
 	delete modelParticle_;
-	delete particle_;
 }
 
 void GameScene::Initialize() { 
@@ -14,19 +13,33 @@ void GameScene::Initialize() {
 	worldTransform_.Initialize();
 	camera_.Initialize();
 
-	particle_ = new Particle();
-	particle_->Initialize(modelParticle_);
+	for (int i = 0; i < 150; i++) {
+		Particle* particle = new Particle();
+		// 位置
+		Vector3 position = {0.5f * i, 0.0f, 0.0f};
+		// 初期化
+		particle->Initialize(modelParticle_, position);
+		//　リストに追加
+		particles_.push_back(particle);
+
+	}
+
 	
 }
 
 void GameScene::Update() { 
-	particle_->Update(); 
+	for (Particle* particle : particles_) {
+		particle->Update(); 
+
+	}
 }
 
 void GameScene::Draw() { 
 	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
 	Model::PreDraw(dxCommon->GetCommandList());
-	particle_->Draw(camera_);
+	for (Particle* particle : particles_) {
+		particle->Draw(camera_);
+	}
 	Model::PostDraw();
 
 
