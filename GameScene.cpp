@@ -4,6 +4,11 @@ GameScene::GameScene() {}
 
 GameScene::~GameScene() { 
 	delete modelParticle_;
+	// パーティクルの開放
+	for (Particle* particle : particles_) {
+		delete particle;
+	}
+	particles_.clear();
 }
 
 void GameScene::Initialize() { 
