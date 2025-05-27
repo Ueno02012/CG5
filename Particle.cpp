@@ -1,20 +1,28 @@
 #include "Particle.h"
 #include "cassert"
+using namespace MathUtility;
+
+
 void Particle::Initialize(Model* model) { 
 	assert(model);
 
 	model_ = model;
 	worldTransform_.Initialize();
-
+	// 色の設定
+	objectColor_.Initialize();
+	color_ = {1, 1, 0, 1};
 }
 
 void Particle::Update() { 
-	worldTransform_.TransferMatrix(); 
+	worldTransform_.translation_ += {0.0f, 0.1f, 0.0f};
+	worldTransform_.UpdateMatrix();
 
+	// 色変更に数値を設定
+	objectColor_.SetColor(color_);
 
 }
 
 void Particle::Draw(Camera& camera) { 
-	model_->Draw(worldTransform_, camera);
+	model_->Draw(worldTransform_, camera,&objectColor_);
 
 }
