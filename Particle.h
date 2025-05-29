@@ -23,6 +23,8 @@ public:
 	/// </summary>
 	/// <param name="camera">カメラ</param>
 	void Draw(Camera& camera);
+	bool IsFinished() { return isFinished_; }
+
 
 private:
 	// ワールド変換データ
@@ -35,5 +37,12 @@ private:
 	Vector4 color_;
 	// 移動量
 	Vector3 velocity_;
+
+	// 終了フラグ
+	bool isFinished_ = false;
+	//　経過時間カウント
+	float counter_ = 0.0f;
+	// 存在時間
+	const float kDuration = 1.0f;
 
 };
