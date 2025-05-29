@@ -1,5 +1,7 @@
 #include "GameScene.h"
 #include <random>
+using namespace KamataEngine;
+using namespace MathUtility;
 std::random_device seedGenerator;
 std::mt19937 randomEngine(seedGenerator());
 std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
@@ -21,25 +23,35 @@ void GameScene::Initialize() {
 	// ワールドトランスフォームの初期化
 	worldTransform_.Initialize();
 	camera_.Initialize();
+	srand((unsigned)time(NULL));
 
+}
+void GameScene::ParticleBorn(Vector3 position) {
 	for (int i = 0; i < 150; i++) {
 		Particle* particle = new Particle();
 		// 位置
-		Vector3 position = {0.0f, 0.0f, 0.0f};
+		// Vector3 position = {0.0f, 0.0f, 0.0f};
 		// 移動量
 		Vector3 velocity = {distribution(randomEngine), distribution(randomEngine), 0};
 
 		// 初期化
-		particle->Initialize(modelParticle_, position,velocity);
-		//　リストに追加
+		particle->Initialize(modelParticle_, position, velocity);
+		// 　リストに追加
 		particles_.push_back(particle);
 
+		// 動きの調整
+		Normalize(velocity);
+		velocity *= distribution(randomEngine);
+		velocity *= 0.1f;
 	}
-
-	
 }
 
 void GameScene::Update() { 
+	if (rand() % 20 == 0) {
+		Vector3 position = {distribution(randomEngine) * 30.0f, distribution(randomEngine) * 20.0f, 0};
+		ParticleBorn(position);
+	}
+
 	for (Particle* particle : particles_) {
 		particle->Update(); 
 	}
@@ -63,3 +75,4 @@ void GameScene::Draw() {
 
 
 }
+

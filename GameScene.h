@@ -15,6 +15,10 @@ public:
 	void Initialize();
 	void Update();
 	void Draw();
+	/// <summary>
+	/// パーティクル発生
+	/// </summary>
+	void ParticleBorn(Vector3 position);
 
 	// パーティクル
 	std::list<Particle*> particles_;
@@ -25,4 +29,5 @@ private:
 	WorldTransform worldTransform_;
 	// カメラ
 	Camera camera_;
+
 };
