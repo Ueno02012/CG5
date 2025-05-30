@@ -1,78 +1,86 @@
 #include "GameScene.h"
-#include <random>
 using namespace KamataEngine;
-using namespace MathUtility;
-std::random_device seedGenerator;
-std::mt19937 randomEngine(seedGenerator());
-std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
-
 GameScene::GameScene() {}
+GameScene::~GameScene() {
 
-GameScene::~GameScene() { 
-	delete modelParticle_;
-	// パーティクルの開放
-	for (Particle* particle : particles_) {
-		delete particle;
-	}
-	particles_.clear();
+	//// パーティクル3Dモデルデータの解放
+	// delete modelParticle_;
+	// modelParticle_ = nullptr;
+	//  カメラの解放
+
+	delete effect_;
+	effect_ = nullptr;
+
+	delete modelEffect_;
+	modelEffect_ = nullptr;
 }
 
-void GameScene::Initialize() { 
-	
-	modelParticle_ = Model::CreateSphere(4, 4);
-	// ワールドトランスフォームの初期化
-	worldTransform_.Initialize();
+void GameScene::Initialize() {
+	// DirectXCommonインスタンスの取得
+	dxCommon_ = DirectXCommon::GetInstance();
+	// Inputインスタンスの取得
+	input_ = Input::GetInstance();
+	// Audioインスタンスの取得
+	audio_ = Audio::GetInstance();
+
+	//// モデルの初期化
+	// modelParticle_ = Model::CreateSphere(4, 4);
+	//  モデルの初期化
+	// modelEffect_->Create();
+	modelEffect_ = Model::CreateFromOBJ("Plane");
+	// modelEffect_=Model::CreateSphere(4, 4);
+	effect_ = new Effect();
+	effect_->Initialize(modelEffect_);
+
+	// カメラの初期化
 	camera_.Initialize();
-	srand((unsigned)time(NULL));
-
-}
-void GameScene::ParticleBorn(Vector3 position) {
-	for (int i = 0; i < 150; i++) {
-		Particle* particle = new Particle();
-		// 位置
-		// Vector3 position = {0.0f, 0.0f, 0.0f};
-		// 移動量
-		Vector3 velocity = {distribution(randomEngine), distribution(randomEngine), 0};
-
-		// 初期化
-		particle->Initialize(modelParticle_, position, velocity);
-		// 　リストに追加
-		particles_.push_back(particle);
-
-		// 動きの調整
-		Normalize(velocity);
-		velocity *= distribution(randomEngine);
-		velocity *= 0.1f;
-	}
 }
 
-void GameScene::Update() { 
-	if (rand() % 20 == 0) {
-		Vector3 position = {distribution(randomEngine) * 30.0f, distribution(randomEngine) * 20.0f, 0};
-		ParticleBorn(position);
-	}
+void GameScene::Update() { effect_->Update(); }
 
-	for (Particle* particle : particles_) {
-		particle->Update(); 
-	}
-	// 終了フラグの立ったパーティクルを削除
-	particles_.remove_if([](Particle* particle) {
-		if (particle->IsFinished()) {
-			delete particle;
-			return true;
-		}
-		return false;
-	});
-}
+void GameScene::Draw() {
 
-void GameScene::Draw() { 
-	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
-	Model::PreDraw(dxCommon->GetCommandList());
-	for (Particle* particle : particles_) {
-		particle->Draw(camera_);
-	}
+	// コマンドリストの取得
+	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommandList();
+
+#pragma region 背景スプライト描画
+	// 背景スプライト描画前処理
+	Sprite::PreDraw(commandList);
+
+	/// <summary>
+	/// ここに背景スプライトの描画処理を追加できる
+	/// </summary>
+
+	// スプライト描画後処理
+	Sprite::PostDraw();
+	// 深度バッファクリア
+	dxCommon_->ClearDepthBuffer();
+#pragma endregion
+
+#pragma region 3Dオブジェクト描画
+	// 3Dオブジェクト描画前処理
+	Model::PreDraw(commandList);
+
+	/// <summary>
+	/// ここに3Dオブジェクトの描画処理を追加できる
+	/// </summary>
+
+	effect_->Draw(camera_);
+
+	// 3Dオブジェクト描画後処理
 	Model::PostDraw();
+#pragma endregion
 
+#pragma region 前景スプライト描画
+	// 前景スプライト描画前処理
+	Sprite::PreDraw(commandList);
 
+	/// <summary>
+	/// ここに前景スプライトの描画処理を追加できる
+	/// </summary>
+
+	// スプライト描画後処理
+	Sprite::PostDraw();
+
+#pragma endregion
 }
-
