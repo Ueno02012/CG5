@@ -29,7 +29,7 @@ void Effect::Initialize(KamataEngine::Model* model, KamataEngine::Vector3 pos, K
 void Effect::Update() {
 	worldTransform_.rotation_.y += moveSpeed_;
 	worldTransform_.translation_.x += moveSpeed_;
-	worldTransform_.translation_.y += moveSpeed_;
+	worldTransform_.translation_.z += moveSpeed_;
 
 	// 終了なら何もしない
 	if (isFinished_) {
