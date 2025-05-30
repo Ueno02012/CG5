@@ -1,12 +1,21 @@
+
 #include "GameScene.h"
 using namespace KamataEngine;
 
 #include <random>
 
+std::random_device seed_Generator;
+std::mt19937 RandomEngine(seed_Generator());
+std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+std::uniform_real_distribution<float> RandomFloat(-1.0f, 1.0f);
 
 GameScene::GameScene() {}
 GameScene::~GameScene() {
 
+	//// パーティクル3Dモデルデータの解放
+	// delete modelParticle_;
+	// modelParticle_ = nullptr;
+	//  カメラの解放
 
 	// エフェクトの解放
 	for (Effect* effect : effectes_) {
@@ -26,25 +35,36 @@ void GameScene::Initialize() {
 	// Audioインスタンスの取得
 	audio_ = Audio::GetInstance();
 
+	// 乱数の初期化
+	// srand((unsigned)time(NULL));
+
+	// Vector3 size = Vector3(0.0f, 0.0f/*RandomSize(RandomEngine)*/, 0.0f);
+	// Vector3 rotate = Vector3(0.0f, 0.0f, 0.0f/*RandomRotation(RandomEngine)*/);
+
+	//// モデルの初期化
+	// modelParticle_ = Model::CreateSphere(4, 4);
+	//  モデルの初期化
+	// modelEffect_->Create();
 	modelEffect_ = Model::CreateFromOBJ("Plane");
 
 	// エフェクトの生成
-	for (int i = 0; i < 10; i++) {
-		// 生成
-		Effect* effect = new Effect();
-		// 位置
-		Vector3 pos = Vector3(0.0f, 0.0f, 0.0f);
-		// 初期化
-		effect->Initialize(modelEffect_, pos);
-		// リストに追加
-		effectes_.push_back(effect);
-	}
+	// modelEffect_=Model::CreateSphere(4, 4);
+	// effect_ = new Effect();
+	// effect_->Initialize(modelEffect_,pos);
 
 	// カメラの初期化
 	camera_.Initialize();
+
+	// 乱数の初期化
+	srand((unsigned)time(NULL));
 }
 
 void GameScene::Update() {
+	if (rand() % 20 == 0) {
+		Vector3 pos = Vector3(RandomFloat(RandomEngine) * 30.0f, RandomFloat(RandomEngine) * 20.0f, 0);
+		Vector4 color = Vector4(distribution(RandomEngine), distribution(RandomEngine), distribution(RandomEngine), 1.0f);
+		EffectBorn(pos, color);
+	}
 
 	for (Effect* effect : effectes_) {
 		effect->Update();
@@ -58,6 +78,7 @@ void GameScene::Update() {
 		return false;
 	});
 }
+
 void GameScene::Draw() {
 
 	// コマンドリストの取得
@@ -105,4 +126,17 @@ void GameScene::Draw() {
 	Sprite::PostDraw();
 
 #pragma endregion
+}
+
+void GameScene::EffectBorn(Vector3 pos, Vector4 color) {
+	for (int i = 0; i < 10; i++) {
+		// 生成
+		Effect* effect = new Effect();
+		//// 位置
+		// Vector3 pos = Vector3(0.0f, 0.0f, 0.0f);
+		//  初期化
+		effect->Initialize(modelEffect_, pos, color);
+		// リストに追加
+		effectes_.push_back(effect);
+	}
 }
