@@ -1,12 +1,13 @@
 #pragma once
-#include<KamataEngine.h>
+#include <KamataEngine.h>
+
 class Effect {
 public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
 	/// <param name="model">モデル</param>
-	void Initialize(KamataEngine::Model* model);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Vector3 pos);
 	/// <summary>
 	/// 更新
 	/// </summary>
@@ -21,6 +22,4 @@ private:
 	KamataEngine::WorldTransform worldTransform_;
 	// モデル
 	KamataEngine::Model* model_ = nullptr;
-
-
 };

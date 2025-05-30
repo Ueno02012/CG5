@@ -1,9 +1,9 @@
 #pragma once
-#include"KamataEngine.h"
-#include "Particle.h"
-#include"Effect.h"
+#include "Effect.h"
+#include "KamataEngine.h"
+
+// ゲームシーン
 class GameScene {
-	
 public:
 	// コンストラクタ
 	GameScene();
@@ -29,5 +29,5 @@ private:
 
 	KamataEngine::Model* modelEffect_;
 	// エフェクト
-	Effect* effect_ = nullptr;
+	std::list<Effect*> effectes_;
 };
