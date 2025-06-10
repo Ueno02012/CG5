@@ -102,22 +102,21 @@ ID3DBlob* errorBlob = nullptr; //エラーオブジェクト
 
 //　頂点シェーダの読み込みとコンパイル
 Shader vs;
-vs.Load(L"Resources/shaders/TestVS.hlsl", "vs_5_0");
-assert(vs.GetBlob() != nullptr);
- 
+vs.LoadDxc(L"Resources/shaders/TestVS.hlsl", L"vs_6_0"); // 変更
+assert(vs.GetDxcBlob() != nullptr); 
  
  
 //------------------PixelShaderをCompileする------------------//
 // ピクセルシェーダの読み込みとコンパイル
 Shader ps;
-ps.Load(L"Resources/shaders/TestPS.hlsl", "ps_5_0");
-assert(ps.GetBlob() != nullptr);
+ps.LoadDxc(L"Resources/shaders/TestPS.hlsl", L"ps_6_0"); // 変更
+assert(ps.GetDxcBlob() != nullptr);                      
 //------------------PSOの生成------------------//
 D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
 graphicsPipelineStateDesc.pRootSignature = rootSignature;   // RootSignature
 graphicsPipelineStateDesc.InputLayout = inputLayoutDesc;	// InputLayout
-graphicsPipelineStateDesc.VS = {vs.GetBlob()->GetBufferPointer(), vs.GetBlob()->GetBufferSize()}; // VertexShader
-graphicsPipelineStateDesc.PS = {ps.GetBlob()->GetBufferPointer(), ps.GetBlob()->GetBufferSize()}; // PixselShader
+graphicsPipelineStateDesc.VS = {vs.GetDxcBlob()->GetBufferPointer(), vs.GetDxcBlob()->GetBufferSize()}; // VertexShader
+graphicsPipelineStateDesc.PS = {ps.GetDxcBlob()->GetBufferPointer(), ps.GetDxcBlob()->GetBufferSize()}; // PixselShader
 graphicsPipelineStateDesc.BlendState = blendDesc;			// BlendState
 graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;	// RasterizerState
 // 書き込むRTVの情報
